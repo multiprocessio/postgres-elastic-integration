@@ -1,17 +1,35 @@
 import calendar
 import datetime
 import dateutil
+import json
 import random
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
-CUSTOMERS = 1
+CUSTOMERS = 200
 
-MONTHS = 7
+MONTHS = 1
 
 AVG_RESPONSE_TIME_S = 5
 STDEV_RESPONSE_TIME_S = 50
 
 AVG_REQUEST_PER_DAY = 10
 STDEV_REQUEST_PER_DAY = 90
+
+
+def http(method, url, body):
+    data = json.dumps(body).encode() if body else None
+    req = Request(url, data=data, method=method)
+    req.add_header('Content-Type', 'application/json')
+    try:
+        rsp = urlopen(req)
+        rsp_body = rsp.read().decode()
+        return json.loads(rsp_body)
+    except Exception as e:
+        body = e.read().decode()
+        print(json.dumps(json.loads(body), sort_keys=True, indent=2))
+        raise
+    
 
 random.seed()
 
@@ -45,4 +63,8 @@ for customer in range(CUSTOMERS):
                 time = datetime.time(int(random.random() * 24), int(random.random() * 60), int(random.random() * 60), int(random.random() * 1000))
                 dt = date.isoformat() + "T" + time.isoformat()
                 search_term = random.choice(words)
-                print({"url": "/search?q="+search_term, "start_time": dt, "response_time": rsp_time, "customer_id": customer })
+                log = {"url": "/search?q="+search_term, "@timestamp": dt, "response_time": rsp_time, "customer_id": customer}
+                index = f'logs-{historic_year}-{historic_month}-{day+1}'
+                http('POST', f'http://localhost:9200/{index}/_doc', log)
+
+# TODO: store customer info in postgres
