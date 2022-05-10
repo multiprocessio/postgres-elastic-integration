@@ -26,3 +26,11 @@ host ds_playground ds_playground ::1/128 md5
 ```
 $ docker run -d -p 9200:9200 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.16.3
 ```
+
+## Run
+
+This will take a while. You'll need python3 and psycopg2.
+
+```
+$ python3 generate.py
+```
